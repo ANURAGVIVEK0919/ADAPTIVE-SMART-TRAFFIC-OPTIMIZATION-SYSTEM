@@ -279,17 +279,7 @@ App URL: `http://localhost:3000`
 
 ---
 
-## Supported Vehicle Classes
 
-| Class | Icon | Green Time Weight |
-|---|---|---|
-| `car` | 🚗 | 1.0× |
-| `bike` / `motorcycle` | 🚲 | 0.5× |
-| `ambulance` | 🚑 | 1.0× + triggers preemption |
-| `truck` | 🚚 | 2.0× |
-| `bus` | 🚌 | 2.5× |
-
----
 
 ## License
 
