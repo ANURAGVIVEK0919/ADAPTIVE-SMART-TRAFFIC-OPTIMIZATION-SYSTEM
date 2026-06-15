@@ -116,8 +116,8 @@ def start_simulation(request: StartSimulationRequest):
 @router.post("/simulation/submit-log")
 async def submit_log(request: SubmitLogRequest):
     print(f"[API] submit session={request.session_id} events={len(request.events)}")
-    result = handle_submit_log(request.session_id, request.events)
-    latest_counts = handle_get_latest_results(request.session_id)
+    result = await asyncio.to_thread(handle_submit_log, request.session_id, request.events)
+    latest_counts = await asyncio.to_thread(handle_get_latest_results, request.session_id)
     import time
     latest_counts["timestamp"] = time.time()
     counts = latest_counts.get('lane_counts', [0,0,0,0])

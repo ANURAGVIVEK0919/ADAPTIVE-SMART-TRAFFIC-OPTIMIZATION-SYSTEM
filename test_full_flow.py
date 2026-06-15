@@ -4,10 +4,14 @@ Full Flow Test — Video Pipeline + V2I Ambulance Injection
 Tests: Upload → Job Start → V2I Beacon Inject → Progress Poll → Results
 V2I simulates pressing the "Ambulance" button in the frontend during processing.
 """
+import sys
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+except AttributeError:
+    pass
 import requests
 import time
 import json
-import sys
 import threading
 from pathlib import Path
 

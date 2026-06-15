@@ -1086,7 +1086,7 @@ export default function SimulationPage() {
         <div className="lane-card-header">
           <h3>{laneId.toUpperCase()}</h3>
           <span className={`lane-status ${isActive ? (isThisLaneYellow ? 'lane-status-yellow' : 'lane-status-active') : 'lane-status-stopped'}`}>
-            {isActive ? (isThisLaneYellow ? `🟡 SWITCHING IN ${timeToSwitch}S` : 'ACTIVE') : 'STOPPED'}
+            {isActive ? (isThisLaneYellow ? '🟡 SWITCHING LANE' : 'ACTIVE') : 'STOPPED'}
           </span>
         </div>
 
@@ -1156,7 +1156,7 @@ export default function SimulationPage() {
 
             {emergencyPhase && (
               <Section className={`status-banner status-warning emergency-banner-${emergencyPhase}`}>
-                {emergencyPhase === 'pre-empting' && <h3 style={{ color: 'white', margin: 0 }}>🚨 Emergency Vehicle Detected in {String(emergencyLane).toUpperCase()}! Switching in {Math.max(0, plannedDuration - (tickCount - phaseStartTick))}s</h3>}
+                {emergencyPhase === 'pre-empting' && <h3 style={{ color: 'white', margin: 0 }}>🚨 Emergency Vehicle Detected in {String(emergencyLane).toUpperCase()}! Switching Lane</h3>}
                 {emergencyPhase === 'active' && <h3 style={{ color: 'white', margin: 0 }}>🚑 Emergency Override Active for {String(emergencyLane).toUpperCase()}. Waiting for vehicle to pass...</h3>}
                 {emergencyPhase === 'recovering' && <h3 style={{ color: 'white', margin: 0 }}>✅ Emergency Cleared! Resuming normal cycle in {Math.max(0, plannedDuration - (tickCount - phaseStartTick))}s...</h3>}
               </Section>

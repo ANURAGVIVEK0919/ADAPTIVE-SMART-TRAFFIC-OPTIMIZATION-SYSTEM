@@ -8,11 +8,28 @@ POST /signal/configure  → Gemini parses natural language config commands
 
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
+import os
+import numpy as np
 
 from backend.api.controllers.signal_controller import predict_duration
 from backend.core.services.llm_service import explain_decision, parse_config_command
+from backend.ai.rl.agent import DQNAgent
 
 router = APIRouter(prefix="/signal", tags=["signal"])
+
+# ── Global DQN Agent Cache ───────────────────────────────────────────────────
+_dqn_agent = DQNAgent(15, 2)
+_dqn_model_path = os.path.join("models", "dqn_indian_traffic_final.pth")
+if os.path.exists(_dqn_model_path):
+    try:
+        _dqn_agent.load(_dqn_model_path)
+        _dqn_agent.epsilon = 0.0
+        print("🤖 [FastAPI Startup] DQN agent loaded successfully.")
+    except Exception as e:
+        print(f"Error loading DQN agent model: {e}")
+else:
+    print(f"⚠️ Warning: DQN agent model file not found at {_dqn_model_path}")
+
 
 
 # ── Request / Response models ────────────────────────────────────────────────
@@ -80,10 +97,6 @@ def get_next_signal_decision(state: TrafficState):
     """
     DQN agent decides whether to STAY or SWITCH based on the 15-feature state.
     """
-    from backend.ai.rl.agent import DQNAgent
-    import os
-    import numpy as np
-
     # 1. Build observation (15 features matching env.py)
     obs = []
     # Counts (4)
@@ -106,18 +119,8 @@ def get_next_signal_decision(state: TrafficState):
     
     observation = np.array(obs, dtype=np.float32)
 
-    # 2. Load Agent
-    agent = DQNAgent(15, 2)
-    model_path = os.path.join("models", "dqn_indian_traffic_final.pth")
-    if os.path.exists(model_path):
-        try:
-            agent.load(model_path)
-            agent.epsilon = 0.0
-        except Exception as e:
-            print(f"Error loading model: {e}")
-            
-    # 3. Predict action (0 = Stay, 1 = Switch)
-    action = agent.act(observation)
+    # 2. Predict action (0 = Stay, 1 = Switch)
+    action = _dqn_agent.act(observation)
     
     if os.getenv("DEBUG_AI", "true").lower() == "true":
         print(f"🤖 [DQN] State (normed): {np.array2string(observation, precision=2, separator=',')}")

@@ -1943,7 +1943,7 @@ def run_pipeline(
                 # Append a lane_state event so backend can compute metrics
                 events.append({
                     "eventType": "rl_decision",
-                    "timestamp": int(current_time * 1000),
+                    "timestamp": run_start_ms + int(current_time * 1000),
                     "payload": {
                         "snapshot": {
                             "lane_state": lane_state_snapshot,
@@ -2330,6 +2330,8 @@ def run_pipeline(
                 frame_index += 1
             if realtime:
                 time.sleep(frame_delay)
+            else:
+                time.sleep(0.005)  # Yield GIL to prevent starving FastAPI asyncio web server
     finally:
         stop_event.set()
         detection_thread.join(timeout=2.0)

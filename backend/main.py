@@ -1,3 +1,9 @@
+import sys
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+except AttributeError:
+    pass
+
 from fastapi import FastAPI  # FastAPI app
 from fastapi.middleware.cors import CORSMiddleware  # CORS middleware
 from backend.api.routers.simulation import router as simulation_router

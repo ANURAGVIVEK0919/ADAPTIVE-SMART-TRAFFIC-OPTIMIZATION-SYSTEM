@@ -1,6 +1,10 @@
+import sys
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+except AttributeError:
+    pass
 import requests
 import time
-import sys
 from pathlib import Path
 
 BASE = "http://localhost:8000"

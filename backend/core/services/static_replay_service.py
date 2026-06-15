@@ -20,6 +20,12 @@ def compute_avg_wait_time(wait_times):
     if not wait_times: return 0.0
     return float(sum(wait_times) / len(wait_times))
 
+def _safe_float(val, default=0.0):
+    try:
+        return float(val) if val is not None else default
+    except (ValueError, TypeError):
+        return default
+
 def parse_event_log(events):
     if not events: return []
     if isinstance(events, str):
@@ -72,8 +78,6 @@ def run_static_replay_simulation(events, timer_duration):
             while vehicle_index[lane] < len(timeline[lane]):
                 v = timeline[lane][vehicle_index[lane]]
                 arrival_time = (float(v.get('timestamp', 0)) - sim_start) / 1000.0
-                if 'v2i' in str(v.get('vehicleId')).lower() or 'ambulance' in str(v.get('vehicleType')).lower():
-                    arrival_time += 26.67  # 400m travel time at 15m/s
                 if arrival_time <= current_time:
                     queues[lane].append({
                         'vid': v.get('vehicleId'),
@@ -332,9 +336,12 @@ def run_dynamic_replay_simulation(events, timer_duration):
 
 def compute_dynamic_metrics(events, timer_duration=None):
     parsed = parse_event_log(events)
-    if not timer_duration:
-        ts = [float(e.get('timestamp', 0)) for e in parsed if e.get('timestamp')]
-        timer_duration = (max(ts) - min(ts)) / 1000.0 if ts else 180.0
+    ts = [_safe_float(e.get('timestamp')) for e in parsed if e.get('timestamp')]
+    actual_duration = (max(ts) - min(ts)) / 1000.0 if ts else 180.0
+    if timer_duration is not None and _safe_float(timer_duration) > 0:
+        timer_duration = max(_safe_float(timer_duration), actual_duration)
+    else:
+        timer_duration = actual_duration
         
     replay = run_dynamic_replay_simulation(events, timer_duration)
     all_records = replay['wait_time_records']
@@ -375,9 +382,12 @@ def compute_dynamic_metrics(events, timer_duration=None):
 
 def compute_static_metrics(events, timer_duration=None):
     parsed = parse_event_log(events)
-    if not timer_duration:
-        ts = [float(e.get('timestamp', 0)) for e in parsed if e.get('timestamp')]
-        timer_duration = (max(ts) - min(ts)) / 1000.0 if ts else 180.0
+    ts = [_safe_float(e.get('timestamp')) for e in parsed if e.get('timestamp')]
+    actual_duration = (max(ts) - min(ts)) / 1000.0 if ts else 180.0
+    if timer_duration is not None and _safe_float(timer_duration) > 0:
+        timer_duration = max(_safe_float(timer_duration), actual_duration)
+    else:
+        timer_duration = actual_duration
         
     replay = run_static_replay_simulation(events, timer_duration)
     all_records = replay['wait_time_records']
@@ -416,5 +426,17 @@ def compute_static_metrics(events, timer_duration=None):
         'ambulance_avg_wait_time': compute_avg_wait_time(amb_waits)
     }
 
-def compute_ambulance_wait_time_from_decisions(events): return 0.0
+def compute_ambulance_wait_time_from_decisions(events):
+    parsed = parse_event_log(events)
+    if not parsed:
+        return 0.0
+    ts = [_safe_float(e.get('timestamp')) for e in parsed if e.get('timestamp')]
+    actual_duration = (max(ts) - min(ts)) / 1000.0 if ts else 180.0
+    replay = run_dynamic_replay_simulation(parsed, actual_duration)
+    amb_waits = [
+        r['waitTime'] for r in replay.get('wait_time_records', [])
+        if 'v2i' in str(r['vehicleId']).lower() or 'ambulance' in str(r['vehicleType']).lower()
+    ]
+    return compute_avg_wait_time(amb_waits)
+
 def run_webster_replay(events, timer_duration): return run_static_replay_simulation(events, timer_duration)
